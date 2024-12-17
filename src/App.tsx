@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { fetchData } from "./data";
-import { DataTable } from "primereact/datatable";
+import {
+  DataTable,
+  DataTableSelectionMultipleChangeEvent,
+} from "primereact/datatable";
 import { Column } from "primereact/column";
 import BasicDemo from "./components/Paginator";
 import "./App.css";
@@ -15,10 +18,6 @@ interface User {
   date_end: number;
 }
 
-interface DataTableSelectionChangeEvent {
-  value: User[];
-}
-
 function App() {
   const [tableData, setTableData] = useState<User[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -27,7 +26,7 @@ function App() {
 
   const [selectedRows, setSelectedRows] = useState<User[] | null>(null);
   const op = useRef<OverlayPanel>(null);
-  const [inputValue,setInputValue]= useState<number | string>("");
+  const [inputValue, setInputValue] = useState<number | string>("");
 
   useEffect(() => {
     async function getData() {
@@ -48,42 +47,44 @@ function App() {
     setPage(newPage);
   };
 
- const handleSubmit = () => {
-  const numberOfRows = Number(inputValue);
-  if(numberOfRows > 0 && numberOfRows <= tableData.length){
-    const selected = tableData.slice(0,numberOfRows);
-    setSelectedRows(selected);
-    setInputValue('');
-  }
-  else if (numberOfRows > tableData.length)
-  {
-    setSelectedRows(tableData);
-    setInputValue("");
+  const handleSubmit = () => {
+    const numberOfRows = Number(inputValue);
+    if (numberOfRows > 0 && numberOfRows <= tableData.length) {
+      const selected = tableData.slice(0, numberOfRows);
+      setSelectedRows(selected);
+      setInputValue("");
+    } else if (numberOfRows > tableData.length) {
+      setSelectedRows(tableData);
+      setInputValue("");
 
-    const remaining  = numberOfRows - tableData.length;
-    const nextPage = page + 1;
-    const selectRemainingRows = (remaining: number,nextPage: number) => {
-      if(remaining <= 0) return;
-      fetchData(nextPage).then((data) => {
-        const additionalRows =  data.data.slice(0, remaining);
-        setSelectedRows((prev) => [...(prev || []), ...additionalRows]);
+      const remaining = numberOfRows - tableData.length;
+      const nextPage = page + 1;
+      const selectRemainingRows = (remaining: number, nextPage: number) => {
+        if (remaining <= 0) return;
+        fetchData(nextPage).then((data) => {
+          const additionalRows = data.data.slice(0, remaining);
+          setSelectedRows((prev) => [...(prev || []), ...additionalRows]);
 
-        if(additionalRows.length < remaining){
-          selectRemainingRows(remaining - additionalRows.length, nextPage + 1);
-        }
-      });
-    };
-    selectRemainingRows(remaining,nextPage)
-  }
-  if(op.current){
-    op.current.hide();
-  }
- }
+          if (additionalRows.length < remaining) {
+            selectRemainingRows(
+              remaining - additionalRows.length,
+              nextPage + 1
+            );
+          }
+        });
+      };
+      selectRemainingRows(remaining, nextPage);
+    }
+    if (op.current) {
+      op.current.hide();
+    }
+  };
 
- const onSelectionChange = (e : DataTableSelectionChangeEvent) => {
-  setSelectedRows(e.value)
- }
-
+  const onSelectionChange = (
+    e: DataTableSelectionMultipleChangeEvent<User[]>
+  ) => {
+    setSelectedRows(e.value);
+  };
 
   return (
     <>
@@ -93,7 +94,7 @@ function App() {
           loading={loading}
           stripedRows
           selectionMode="multiple"
-          selection={selectedRows}
+          selection={selectedRows!}
           onSelectionChange={onSelectionChange}
           tableStyle={{ minWidth: "50rem" }}
         >
@@ -102,11 +103,19 @@ function App() {
             field="title"
             header={
               <div className="title">
-                <button onClick={(e) => {if (op.current) op.current.show(e,undefined);}} className="btn">
+                <button
+                  onClick={(e) => {
+                    if (op.current) op.current.show(e, undefined);
+                  }}
+                  className="btn"
+                >
                   <i className="pi pi-chevron-down "></i>
                   <OverlayPanel ref={op}>
-                    <input type="text" placeholder="enter no of rows"
-                    onChange={(e) => setInputValue(e.target.value)} />
+                    <input
+                      type="text"
+                      placeholder="enter no of rows"
+                      onChange={(e) => setInputValue(e.target.value)}
+                    />
                     <button onClick={handleSubmit}>Submit</button>
                   </OverlayPanel>
                 </button>

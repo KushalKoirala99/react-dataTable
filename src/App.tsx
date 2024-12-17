@@ -15,6 +15,10 @@ interface User {
   date_end: number;
 }
 
+interface DataTableSelectionChangeEvent {
+  value: User[];
+}
+
 function App() {
   const [tableData, setTableData] = useState<User[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -22,7 +26,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(true);
 
   const [selectedRows, setSelectedRows] = useState<User[] | null>(null);
-  const op = useRef(null);
+  const op = useRef<OverlayPanel>(null);
   const [inputValue,setInputValue]= useState<number | string>("");
 
   useEffect(() => {
@@ -71,7 +75,13 @@ function App() {
     };
     selectRemainingRows(remaining,nextPage)
   }
-  op.current.hide();
+  if(op.current){
+    op.current.hide();
+  }
+ }
+
+ const onSelectionChange = (e : DataTableSelectionChangeEvent) => {
+  setSelectedRows(e.value)
  }
 
 
@@ -84,7 +94,7 @@ function App() {
           stripedRows
           selectionMode="multiple"
           selection={selectedRows}
-          onSelectionChange={(e) => setSelectedRows(e.value)}
+          onSelectionChange={onSelectionChange}
           tableStyle={{ minWidth: "50rem" }}
         >
           <Column selectionMode="multiple" style={{ width: "3rem" }} />
@@ -92,7 +102,7 @@ function App() {
             field="title"
             header={
               <div className="title">
-                <button onClick={(e) => op.current.show(e)} className="btn">
+                <button onClick={(e) => {if (op.current) op.current.show(e,undefined);}} className="btn">
                   <i className="pi pi-chevron-down "></i>
                   <OverlayPanel ref={op}>
                     <input type="text" placeholder="enter no of rows"

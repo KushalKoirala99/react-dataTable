@@ -1,0 +1,11 @@
+.title {
+  display: flex;
+  align-items: center;
+}
+
+.btn {
+  padding-right: 15px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
